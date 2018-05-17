@@ -88,6 +88,39 @@ public class SecretBox {
     }
 
     /**
+     Encrypts a message with a shared secret key.
+
+     - Parameter message: The message to encrypt.
+     - Parameter secretKey: The shared secret key.
+     - Parameter nonce: The nonce for encryption.
+
+     - Returns: The authenticated ciphertext and encryption nonce.
+     */
+    public func seal(message: Data, secretKey: Key, nonce: Nonce) -> (authenticatedCipherText: Data, nonce: Nonce)? {
+        if secretKey.count != KeyBytes {
+            return nil
+        }
+        var authenticatedCipherText = Data(count: message.count + MacBytes)
+
+        let result = authenticatedCipherText.withUnsafeMutableBytes { authenticatedCipherTextPtr in
+            message.withUnsafeBytes { messagePtr in
+                nonce.withUnsafeBytes { noncePtr in
+                    secretKey.withUnsafeBytes { secretKeyPtr in
+                        crypto_secretbox_easy(
+                            authenticatedCipherTextPtr,
+                            messagePtr, UInt64(message.count),
+                            noncePtr, secretKeyPtr)
+                    }
+                }
+            }
+        }
+        if result != 0 {
+            return nil
+        }
+        return (authenticatedCipherText: authenticatedCipherText, nonce: nonce)
+    }
+
+    /**
      Encrypts a message with a shared secret key (detached mode).
 
      - Parameter message: The message to encrypt.
