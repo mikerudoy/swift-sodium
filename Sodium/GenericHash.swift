@@ -48,14 +48,15 @@ public class GenericHash {
      */
     public func hash(message: Data, key: Data?, outputLength: Int) -> Data? {
         var output = Data(count: outputLength)
+        let outputCount = output.count
         var result: Int32 = -1
 
         if let key = key {
             result = output.withUnsafeMutableBytes { outputPtr in
-                message.withUnsafeBytes { messagePtr in
+                return message.withUnsafeBytes { messagePtr in
                     key.withUnsafeBytes { keyPtr in
                         crypto_generichash(
-                            outputPtr, output.count,
+                            outputPtr, outputCount,
                             messagePtr, CUnsignedLongLong(message.count),
                             keyPtr, key.count)
                     }
@@ -65,7 +66,7 @@ public class GenericHash {
             result = output.withUnsafeMutableBytes { outputPtr in
                 message.withUnsafeBytes { messagePtr in
                     crypto_generichash(
-                        outputPtr, output.count,
+                        outputPtr, outputCount,
                         messagePtr, CUnsignedLongLong(message.count),
                         nil, 0)
                 }
@@ -181,8 +182,9 @@ public class GenericHash {
          */
         public func final() -> Data? {
             var output = Data(count: outputLength)
+            let outputCount = output.count
             let result = output.withUnsafeMutableBytes { outputPtr in
-                crypto_generichash_final(state!, outputPtr, output.count)
+                crypto_generichash_final(state!, outputPtr, outputCount)
             }
             if result != 0 {
                 return nil
